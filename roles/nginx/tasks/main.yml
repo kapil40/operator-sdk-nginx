@@ -1,0 +1,42 @@
+---
+# tasks file for Nginx
+- name: start nginx
+  community.kubernetes.k8s:
+    definition:
+      kind: Deployment
+      apiVersion: apps/v1
+      metadata:
+        name: '{{ ansible_operator_meta.name }}-memcached'
+        namespace: '{{ ansible_operator_meta.namespace }}' 
+        labels: 
+         app: nginx
+      spec:
+        replicas: "{{size}}"
+        selector:
+          matchLabels:
+            app: nginx
+        template:
+          metadata:
+            labels:
+              app: nginx
+          spec:
+            containers:
+            - name: nginx
+              image: "{{image}}"
+              ports:
+                - containerPort: 80
+- name: Start Service
+  community.kubernetes.k8s:
+    definition:
+      kind: Service
+      apiVersion: v1
+      metadata:
+        name: '{{ ansible_operator_meta.name }}-memcached-service'
+        namespace: '{{ ansible_operator_meta.namespace }}'
+      spec:
+        type: NodePort 
+        ports:
+        - port: 80
+          nodePort: 30145
+        selector:
+          app: nginx
